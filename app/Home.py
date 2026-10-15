@@ -4,36 +4,24 @@ from pathlib import Path
 _repo_root = Path(__file__).resolve().parent.parent
 if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
-_app_dir = Path(__file__).resolve().parent
-if str(_app_dir) not in sys.path:
-    sys.path.insert(0, str(_app_dir))
 
 import numpy as np
+import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-try:
-    from app.ui_utils import (
-        apply_custom_styles,
-        load_app_data,
-        load_app_model,
-        load_metrics_and_residuals,
-        render_sidebar_controls,
-    )
-except ImportError:
-    from ui_utils import (
-        apply_custom_styles,
-        load_app_data,
-        load_app_model,
-        load_metrics_and_residuals,
-        render_sidebar_controls,
-    )
-from src.db import get_followups
-from src.features import DEFAULT_FEATURE_COLS
-from src.priority import compute_priority_components
+from app.ui_utils import (
+    apply_custom_styles,
+    load_app_data,
+    load_app_model,
+    load_metrics_and_residuals,
+    render_sidebar_controls,
+)
+from src.features import REGRESSION_FEATURES, TARGET_COL
+from src.priority import build_priority_queue, compute_priority_components
 
 st.set_page_config(
-    page_title="Student Performance & Support System",
+    page_title="Student Performance Dashboard",
     page_icon="🎓",
     layout="wide",
 )
@@ -41,22 +29,33 @@ st.set_page_config(
 apply_custom_styles()
 settings = render_sidebar_controls()
 
-st.title("🎓 Student Performance & Personalized Support System")
-st.markdown(
-    "A teacher-facing decision-support dashboard predicting final exam outcomes, "
-    "flagging students needing assistance against customizable targets, and prescribing actionable, evidence-based recommendations."
-)
+# ── A. Header ──────────────────────────────────────────────────────────
+st.title("Student Performance Dashboard")
+st.caption("Predict academic outcomes and identify students who may benefit from additional support.")
+
+# ── B. Primary Prediction Action ───────────────────────────────────────
+st.markdown("""
+<div class="cta-banner">
+    <div class="cta-title">Predict Student Marks</div>
+    <div class="cta-desc">Enter series examination marks and relevant lifestyle attributes to estimate the final examination score and view academic risk classification.</div>
+</div>
+""", unsafe_allow_html=True)
+
+btn_col, _ = st.columns([1.5, 3.5])
+with btn_col:
+    if st.button("Predict Student Marks →", type="primary", use_container_width=True):
+        st.switch_page("pages/0_Model_Prediction.py")
 
 model = load_app_model()
 train_df, test_df = load_app_data()
 metrics, oof_res = load_metrics_and_residuals()
 
 if model is None or test_df.empty:
-    st.warning("Model or data not ready. Please execute: `python -m src.data` and `python -m src.train`.")
+    st.warning("Model artifacts or processed data not found. Please run training pipeline.")
     st.stop()
 
-# Score the cohort (using test_df as active evaluation cohort or all students)
-X_test = test_df[DEFAULT_FEATURE_COLS]
+# ── C. Summary Metric Cards ───────────────────────────────────────────
+X_test = test_df[REGRESSION_FEATURES]
 y_pred = model.predict(X_test)
 residual_std = oof_res.get("residual_std", 6.5)
 
@@ -68,144 +67,126 @@ scored_cohort = compute_priority_components(
     settings=settings,
 )
 
-# Follow-ups count
-all_followups = get_followups()
-total_followups_logged = len(all_followups)
-
+total_students = len(test_df)
 at_risk_mask = scored_cohort["predicted_score"] < (settings.target_score + settings.risk_margin)
 at_risk_count = int(np.sum(at_risk_mask))
 avg_predicted = float(np.mean(y_pred))
-total_students = len(test_df)
-high_risk_count = int(np.sum(scored_cohort["risk_badge"] == "High"))
+chosen_model = metrics.get("chosen_model", "LinearRegression")
+test_mae = metrics.get("test_regression_metrics", {}).get(chosen_model, {}).get("mae", 5.19)
 
-# Metric Cards
-col1, col2, col3, col4 = st.columns(4)
+m1, m2, m3, m4 = st.columns(4)
 
-with col1:
+with m1:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-title">Active Cohort Students</div>
+        <div class="metric-title">Active Cohort</div>
         <div class="metric-value">{total_students:,}</div>
-        <div class="metric-subtitle">Held-out test set (20% sample)</div>
+        <div class="metric-subtitle">Evaluated students</div>
     </div>
     """, unsafe_allow_html=True)
 
-with col2:
+with m2:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-title">At-Risk Students</div>
+        <div class="metric-title">Flagged for Support</div>
         <div class="metric-value" style="color: #DC2626;">{at_risk_count}</div>
-        <div class="metric-subtitle">Target &lt; {settings.target_score:.0f} + {settings.risk_margin:.0f} pts buffer ({round(at_risk_count/total_students*100, 1)}%)</div>
+        <div class="metric-subtitle">&lt; {settings.target_score + settings.risk_margin:.0f} pts threshold ({round(at_risk_count/total_students*100, 1)}%)</div>
     </div>
     """, unsafe_allow_html=True)
 
-with col3:
+with m3:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-title">Mean Predicted Score</div>
-        <div class="metric-value">{avg_predicted:.1f} / 100</div>
-        <div class="metric-subtitle">Cohort baseline average</div>
+        <div class="metric-title">Mean Predicted Mark</div>
+        <div class="metric-value">{avg_predicted:.1f} <span style="font-size: 1rem; color: #64748B;">/ 100</span></div>
+        <div class="metric-subtitle">Cohort forecast average</div>
     </div>
     """, unsafe_allow_html=True)
 
-with col4:
+with m4:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-title">Interventions Logged</div>
-        <div class="metric-value" style="color: #2F5BEA;">{total_followups_logged}</div>
-        <div class="metric-subtitle">Recorded in tracking database</div>
+        <div class="metric-title">Model Test MAE</div>
+        <div class="metric-value">{test_mae:.2f} <span style="font-size: 1rem; color: #64748B;">pts</span></div>
+        <div class="metric-subtitle">Mean absolute error (Test Set)</div>
     </div>
     """, unsafe_allow_html=True)
 
+# ── D. Essential Decision-Supporting Charts ────────────────────────────
 st.markdown("---")
+c_chart1, c_chart2 = st.columns(2)
 
-col_left, col_right = st.columns([1.8, 1.2])
+with c_chart1:
+    st.subheader("Student Risk Distribution")
+    risk_counts = scored_cohort["risk_badge"].value_counts().reindex(["High", "Medium", "Low"]).fillna(0).reset_index()
+    risk_counts.columns = ["Risk Category", "Student Count"]
 
-with col_left:
-    st.subheader("📊 Cohort Predicted Score Distribution & Risk Thresholds")
-    fig = px.histogram(
-        scored_cohort,
-        x="predicted_score",
-        nbins=35,
-        color="risk_badge",
-        color_discrete_map={"High": "#EF4444", "Medium": "#F59E0B", "Low": "#10B981"},
-        title="Distribution of Predicted Final Exam Scores by Risk Level",
-        labels={"predicted_score": "Predicted Score (Points)", "risk_badge": "Risk Badge"},
+    fig_risk = px.bar(
+        risk_counts,
+        x="Risk Category",
+        y="Student Count",
+        color="Risk Category",
+        color_discrete_map={"High": "#DC2626", "Medium": "#D97706", "Low": "#16A34A"},
+        text="Student Count",
     )
-    fig.add_vline(
-        x=settings.target_score,
-        line_dash="dash",
-        line_color="#DC2626",
-        annotation_text=f"Target ({settings.target_score})",
-    )
-    fig.add_vline(
-        x=settings.target_score + settings.risk_margin,
-        line_dash="dot",
-        line_color="#F59E0B",
-        annotation_text=f"Risk Threshold ({settings.target_score + settings.risk_margin})",
-    )
-    fig.update_layout(
+    fig_risk.update_layout(
         template="plotly_white",
-        bargap=0.08,
-        margin=dict(l=20, r=20, t=40, b=20),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        height=260,
+        margin=dict(l=10, r=10, t=10, b=10),
+        showlegend=False,
     )
-    st.plotly_chart(fig, use_container_width=True)
+    fig_risk.update_traces(textposition="outside")
+    st.plotly_chart(fig_risk, use_container_width=True)
+    st.caption("Risk categories determined by failure probability relative to configured target pass mark.")
 
-with col_right:
-    st.subheader("🤖 Production Model Specification")
-    chosen_model_name = metrics.get("chosen_model", "LinearRegression")
-    st.markdown(f"""
-    - **Active Model:** `{chosen_model_name}` with StandardScaler
-    - **Cross-Validation RMSE:** `{metrics.get('cv_results', {}).get(chosen_model_name, {}).get('rmse_mean', 0.0):.3f}`
-    - **Held-Out Test MAE:** `{metrics.get('test_regression_metrics', {}).get(chosen_model_name, {}).get('mae', 0.0):.2f}` points
-    - **Test R² Variance Explained:** `{metrics.get('test_regression_metrics', {}).get(chosen_model_name, {}).get('r2', 0.0):.3f}`
-    - **90% Prediction Interval Width:** `±{oof_res.get('interval_half_width', 0.0):.1f}` points
-    - **Empirical Test Coverage:** `{metrics.get('prediction_interval', {}).get('test_coverage_pct', 0.0)}%`
-    """)
+with c_chart2:
+    st.subheader("Assessment Scores Overview")
+    plot_df = pd.DataFrame({
+        "Series 1 (/40)": test_df["series_1"],
+        "Series 2 (/40)": test_df["series_2"],
+        "Final Exam (/100)": test_df[TARGET_COL],
+    }).melt(var_name="Assessment", value_name="Score")
 
-    st.markdown("""
-    <div class="disclaimer-box">
-        <b>Model Comparison Rationale:</b><br>
-        Evaluation across Linear Regression, Logistic Regression, and Random Forest demonstrated strong performance (~5.2 MAE, 0.76 R²). 
-        Linear Regression is deployed for production score forecasting to provide transparent score-point explainability and continuous prediction intervals, complementing Logistic Regression for binary risk boundary detection.
-    </div>
-    """, unsafe_allow_html=True)
+    fig_assess = px.box(
+        plot_df,
+        x="Assessment",
+        y="Score",
+        color="Assessment",
+        color_discrete_sequence=["#2563EB", "#0284C7", "#475569"],
+    )
+    fig_assess.update_layout(
+        template="plotly_white",
+        height=260,
+        margin=dict(l=10, r=10, t=10, b=10),
+        showlegend=False,
+    )
+    st.plotly_chart(fig_assess, use_container_width=True)
+    st.caption("Observed score distributions across internal series and actual final examinations.")
 
+# ── E. Priority Students Preview ──────────────────────────────────────
 st.markdown("---")
-st.subheader("⚡ Instant Exam Score Forecaster")
-st.markdown("Test the production Linear Regression model directly by adjusting student assessment marks:")
+col_header, col_nav_btn = st.columns([3, 1])
+with col_header:
+    st.subheader("Students Requiring Attention")
+with col_nav_btn:
+    if st.button("View All Students →", use_container_width=True):
+        st.switch_page("pages/1_Priority_Queue.py")
 
-fc_c1, fc_c2, fc_c3 = st.columns([1, 1, 1.2])
-with fc_c1:
-    quick_s1 = st.slider("Series 1 Exam Mark (0 – 40)", min_value=0.0, max_value=40.0, value=22.0, step=0.5, key="quick_s1")
-with fc_c2:
-    quick_s2 = st.slider("Series 2 Exam Mark (0 – 40)", min_value=0.0, max_value=40.0, value=24.5, step=0.5, key="quick_s2")
-with fc_c3:
-    quick_df = pd.DataFrame([{"series_1": quick_s1, "series_2": quick_s2}])
-    quick_pred = float(model.predict(quick_df)[0])
-    quick_pred_bounded = round(float(np.clip(quick_pred, 0.0, 100.0)), 1)
-    hw = float(oof_res.get("interval_half_width", 11.15))
-    is_at_risk = quick_pred_bounded < (settings.target_score + settings.risk_margin)
-    color = "#DC2626" if is_at_risk else "#16A34A"
-    status = "⚠️ At-Risk" if is_at_risk else "✅ On Track"
-    st.markdown(f"""
-    <div class="metric-card" style="border-top: 4px solid {color}; padding: 14px 18px;">
-        <div class="metric-title">Predicted Final Score: <span style="font-size: 1.6rem; color: {color}; font-weight: 700;">{quick_pred_bounded} / 100</span></div>
-        <div class="metric-subtitle">90% Interval: [{max(0.0, quick_pred_bounded - hw):.1f}, {min(100.0, quick_pred_bounded + hw):.1f}] | Status: <b style="color: {color};">{status}</b></div>
-    </div>
-    """, unsafe_allow_html=True)
+queue_df = build_priority_queue(
+    df=test_df,
+    predicted_scores=y_pred,
+    residual_std=residual_std,
+    settings=settings,
+    capacity=5,
+)
 
-st.markdown("---")
-st.subheader("🚀 Quick Navigation")
-nav0, nav1, nav2, nav3, nav4 = st.columns(5)
-with nav0:
-    st.markdown("🔮 **[Model Prediction](Model_Prediction)**\n\nInput student parameters to generate real-time exam forecasts and intervals.")
-with nav1:
-    st.markdown("🎯 **[Priority Queue](Priority_Queue)**\n\nRank students by intervention need within teacher capacity.")
-with nav2:
-    st.markdown("🔍 **[Student Detail](Student_Detail)**\n\nDeep-dive with score intervals, point contributions, and follow-up logging.")
-with nav3:
-    st.markdown("📈 **[Progress Tracking](Progress_Tracking)**\n\nLog subsequent assessments and monitor trajectories over time.")
-with nav4:
-    st.markdown("🔬 **[Model Evaluation](Model_Evaluation)**\n\nCompare algorithms, fairness audits, and baseline comparisons.")
+if queue_df.empty:
+    st.info("No students currently flagged for prioritized academic support.")
+else:
+    preview_table = queue_df[["rank", "student_id", "predicted_score", "risk_badge", "priority_score", "top_reason"]].copy()
+    preview_table.columns = ["Rank", "Student ID", "Predicted Score", "Risk Category", "Priority Score", "Primary Concern"]
+    st.dataframe(
+        preview_table,
+        use_container_width=True,
+        hide_index=True,
+    )

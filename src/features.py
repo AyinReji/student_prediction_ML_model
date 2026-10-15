@@ -1,38 +1,41 @@
 import pandas as pd
 
 # ──────────────────────────────────────────────────────────────────────
-# REGRESSION FEATURES — authorized predictive inputs for the final
-# examination score model.  These are the ONLY features permitted
-# in the regression pipeline, its preprocessing, and its prediction
-# interval calculations.
+# PREDICTIVE POLICY:
+# "Final examination marks are predicted using Series 1, Series 2, and
+# relevant lifestyle attributes. Lifestyle attributes may contribute to
+# predictions when supported by the training data. These attributes can
+# also inform personalized academic support recommendations."
 # ──────────────────────────────────────────────────────────────────────
-REGRESSION_FEATURES = [
+
+PREDICTIVE_POLICY = (
+    "Final examination marks are predicted using Series 1, Series 2, and "
+    "relevant lifestyle attributes. Lifestyle attributes may contribute to "
+    "predictions when supported by the training data. These attributes can "
+    "also inform personalized academic support recommendations."
+)
+
+ACADEMIC_FEATURES = [
     "series_1",
     "series_2",
 ]
 
-# ──────────────────────────────────────────────────────────────────────
-# LIFESTYLE FEATURES — available for deterministic support rules,
-# teacher conversations, follow-up planning, and contextual notes.
-# These MUST NOT enter the regression model or influence the
-# predicted final examination mark in any way.
-# ──────────────────────────────────────────────────────────────────────
 LIFESTYLE_FEATURES = [
     "study_hours_per_day",
     "attendance_percentage",
     "social_media_hours",
 ]
 
-# Default feature set for regression models — ONLY series_1 and series_2
-DEFAULT_FEATURE_COLS = REGRESSION_FEATURES
+# Complete authorized feature vector for the expanded regression model
+EXPANDED_FEATURES = ACADEMIC_FEATURES + LIFESTYLE_FEATURES
 
-# Legacy alias — kept ONLY for backward-compatible rule evaluation,
-# priority-queue flag counting, and UI display of student profiles.
-# Must NOT be passed to model.fit() or model.predict().
-ALL_STUDENT_FEATURES = REGRESSION_FEATURES + LIFESTYLE_FEATURES
+# Aliases ensuring backward and forward compatibility across training & inference
+REGRESSION_FEATURES = EXPANDED_FEATURES
+DEFAULT_FEATURE_COLS = EXPANDED_FEATURES
+ALL_STUDENT_FEATURES = EXPANDED_FEATURES
 
 # Ablation study features (includes demographics for fairness comparison)
-ABLATION_FEATURE_COLS = REGRESSION_FEATURES + LIFESTYLE_FEATURES + ["age", "gender"]
+ABLATION_FEATURE_COLS = EXPANDED_FEATURES + ["age", "gender"]
 
 TARGET_COL = "final_exam_score"
 PROTECTED_COLS = ["age", "gender"]
@@ -45,7 +48,7 @@ def add_engineered_features(df: pd.DataFrame) -> pd.DataFrame:
     - series_delta: trajectory between series 1 and 2 (series_2 - series_1)
 
     Note: series_avg and series_delta are derived for rule evaluation and
-    UI display only.  The regression model uses raw series_1 and series_2.
+    UI display. Raw series_1 and series_2 are used as model inputs.
     """
     df_out = df.copy()
     if "series_1" in df_out.columns and "series_2" in df_out.columns:

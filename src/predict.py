@@ -109,10 +109,10 @@ def predict_student_performance(
     # 1. Validation and feature preparation
     clean_dict = validate_input_features(raw_inputs)
     input_row = pd.Series(clean_dict)
-    # Regression model ONLY receives authorized predictive features: series_1, series_2
+    # Regression model receives authorized predictive features (series_1, series_2, lifestyle attributes)
     input_df = pd.DataFrame([clean_dict])[REGRESSION_FEATURES]
 
-    # 2. Model prediction (lifestyle features NEVER enter model)
+    # 2. Model prediction
     raw_pred = float(model.predict(input_df)[0])
     bounded_pred = round(float(np.clip(raw_pred, 0.0, 100.0)), 2)
 
@@ -127,11 +127,11 @@ def predict_student_performance(
     risk_badge = get_risk_badge(p_risk, settings.risk_badges.high, settings.risk_badges.medium)
     is_at_risk = bounded_pred < (settings.target_score + settings.risk_margin)
 
-    # 5. Explainability (computed on authorized regression features only)
+    # 5. Explainability (computed across academic and lifestyle features)
     explainer = ModelExplainer(model=model, feature_names=REGRESSION_FEATURES)
-    contributions = explainer.explain_student(input_row, top_k=2)
+    contributions = explainer.explain_student(input_row, top_k=5)
 
-    # 6. Recommendation rules (lifestyle features used ONLY as contextual conversational indicators)
+    # 6. Recommendation rules (evaluated for personalized support recommendations)
     rules_fired = evaluate_student_rules(input_row, settings)
 
     return {

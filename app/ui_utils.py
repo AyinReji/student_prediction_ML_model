@@ -1,7 +1,6 @@
 import sys
 from pathlib import Path
 
-# Ensure workspace root is in sys.path
 _repo_root = Path(__file__).resolve().parent.parent
 if str(_repo_root) not in sys.path:
     sys.path.insert(0, str(_repo_root))
@@ -16,89 +15,125 @@ import streamlit as st
 from src.config import Settings, load_settings, save_settings
 from src.db import init_db
 
-PRIMARY_COLOR = "#2F5BEA"
+PRIMARY_COLOR = "#2563EB"
 
 CUSTOM_CSS = """
 <style>
-/* Clean modern dashboard styling */
+/* ── Academic Minimalist Design Tokens ───────────────────────────────── */
+:root {
+    --text-main: #0F172A;
+    --text-muted: #64748B;
+    --bg-card: #FFFFFF;
+    --border-card: #E2E8F0;
+    --accent-blue: #2563EB;
+}
+
+/* Metric Card */
 .metric-card {
-    background-color: #FFFFFF;
-    border: 1px solid #E2E8F0;
-    border-radius: 10px;
-    padding: 18px 20px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    margin-bottom: 12px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
 }
 .metric-title {
-    font-size: 0.85rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    color: #64748B;
+    color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 6px;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
 }
 .metric-value {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     font-weight: 700;
-    color: #1E293B;
+    color: var(--text-main);
+    line-height: 1.2;
 }
 .metric-subtitle {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: #94A3B8;
     margin-top: 4px;
 }
+
+/* Call-to-action hero banner */
+.cta-banner {
+    background: #F8FAFC;
+    border: 1px solid #CBD5E1;
+    border-left: 5px solid #2563EB;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 18px;
+}
+.cta-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0F172A;
+    margin-bottom: 4px;
+}
+.cta-desc {
+    font-size: 0.85rem;
+    color: #475569;
+}
+
+/* Risk Badges */
 .risk-badge-high {
     background-color: #FEE2E2;
     color: #991B1B;
-    padding: 4px 10px;
-    border-radius: 9999px;
+    padding: 3px 8px;
+    border-radius: 6px;
     font-weight: 600;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     display: inline-block;
 }
 .risk-badge-medium {
     background-color: #FEF3C7;
     color: #92400E;
-    padding: 4px 10px;
-    border-radius: 9999px;
+    padding: 3px 8px;
+    border-radius: 6px;
     font-weight: 600;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     display: inline-block;
 }
 .risk-badge-low {
     background-color: #DCFCE7;
     color: #166534;
-    padding: 4px 10px;
-    border-radius: 9999px;
+    padding: 3px 8px;
+    border-radius: 6px;
     font-weight: 600;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     display: inline-block;
 }
+
+/* Clean Rule Cards */
 .rule-card {
     background-color: #F8FAFC;
-    border-left: 4px solid #2F5BEA;
-    padding: 12px 16px;
+    border-left: 3px solid #2563EB;
+    padding: 10px 14px;
     border-radius: 4px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
 }
 .rule-indicator {
-    border-left-color: #F59E0B !important;
+    border-left-color: #D97706 !important;
 }
-.disclaimer-box {
-    background-color: #EFF6FF;
-    border: 1px solid #BFDBFE;
-    border-radius: 8px;
-    padding: 12px 16px;
-    color: #1E40AF;
-    font-size: 0.85rem;
-    margin-bottom: 16px;
+
+/* Info Box */
+.info-box {
+    background-color: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 6px;
+    padding: 10px 14px;
+    color: #334155;
+    font-size: 0.82rem;
+    margin-bottom: 12px;
 }
 </style>
 """
 
 
 def apply_custom_styles():
-    """Injects high-quality light-theme CSS tokens."""
+    """Injects minimalist academic theme CSS tokens."""
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 
@@ -137,20 +172,28 @@ def load_metrics_and_residuals() -> tuple[dict[str, Any], dict[str, Any]]:
 
 
 def render_sidebar_controls() -> Settings:
-    """Renders persistent teacher controls in the Streamlit sidebar."""
+    """Renders compact teacher controls in the Streamlit sidebar."""
     init_db()
     settings = load_settings()
 
-    st.sidebar.markdown("### ⚙️ Teacher Controls")
-    st.sidebar.markdown("Configure operational parameters dynamically:")
+    st.sidebar.markdown("### Teacher Controls")
 
     new_target = st.sidebar.slider(
-        "Target Pass Score (0-100)",
+        "Target Pass Score",
         min_value=30.0,
         max_value=70.0,
         value=float(settings.target_score),
         step=1.0,
-        help="Students with predicted score below target + margin are flagged as at-risk.",
+        help="Benchmark pass score (default: 40).",
+    )
+
+    new_margin = st.sidebar.slider(
+        "Risk Margin Buffer (pts)",
+        min_value=0.0,
+        max_value=10.0,
+        value=float(settings.risk_margin),
+        step=0.5,
+        help="Score buffer for identifying borderline at-risk students.",
     )
 
     new_capacity = st.sidebar.slider(
@@ -159,19 +202,10 @@ def render_sidebar_controls() -> Settings:
         max_value=100,
         value=int(settings.capacity),
         step=5,
-        help="Maximum number of student interventions the teacher can execute this cycle.",
+        help="Maximum students queued for prioritized intervention.",
     )
 
-    new_margin = st.sidebar.slider(
-        "Risk Margin (Points)",
-        min_value=0.0,
-        max_value=10.0,
-        value=float(settings.risk_margin),
-        step=0.5,
-        help="Buffer added to target score for identifying at-risk boundary.",
-    )
-
-    # Check if settings changed
+    # Persist if changed
     if (
         new_target != settings.target_score
         or new_capacity != settings.capacity
@@ -183,10 +217,10 @@ def render_sidebar_controls() -> Settings:
         save_settings(settings)
 
     st.sidebar.divider()
-    st.sidebar.info(
-        "💡 **Data Reality Notice:**\n"
-        "In this dataset, only `series_1` and `series_2` drive final exam score predictions. "
-        "Lifestyle factors (study hours, attendance, social media) are indicators for conversation, not causal drivers."
+    st.sidebar.caption(
+        "**Predictive Policy:** Final examination marks are predicted using Series 1, Series 2, and "
+        "relevant lifestyle attributes. Lifestyle attributes may contribute to predictions when supported "
+        "by the training data. These attributes can also inform personalized academic support recommendations."
     )
 
     return settings
