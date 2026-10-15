@@ -15,10 +15,10 @@ FEATURE_DISPLAY_NAMES = {
     "study_hours_per_day": "Study Hours / Day (Indicator)",
     "attendance_percentage": "Attendance Rate (Indicator)",
     "social_media_hours": "Social Media Hours / Day (Indicator)",
-    "age": "Student Age (Ablation)",
-    "gender_Female": "Gender (Female - Ablation)",
-    "gender_Male": "Gender (Male - Ablation)",
-    "gender_Other": "Gender (Other - Ablation)",
+    "age": "Student Age",
+    "gender_Female": "Gender (Female)",
+    "gender_Male": "Gender (Male)",
+    "gender_Other": "Gender (Other)",
 }
 
 

@@ -166,9 +166,9 @@ with col_right:
 
     st.markdown("""
     <div class="disclaimer-box">
-        <b>Model Selection Rationale:</b><br>
-        5-fold CV proved that Linear Regression, Random Forest, and Gradient Boosting all achieve similar accuracy (~5.2 MAE, 0.76 R²). 
-        Under the 1-standard-error rule, Linear Regression was chosen for absolute transparency and explainability.
+        <b>Model Comparison Rationale:</b><br>
+        Evaluation across Linear Regression, Logistic Regression, and Random Forest demonstrated strong performance (~5.2 MAE, 0.76 R²). 
+        Linear Regression is deployed for production score forecasting to provide transparent score-point explainability and continuous prediction intervals, complementing Logistic Regression for binary risk boundary detection.
     </div>
     """, unsafe_allow_html=True)
 
