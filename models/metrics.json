@@ -1,0 +1,281 @@
+{
+  "chosen_model": "LinearRegression",
+  "selection_rationale": "LinearRegression selected because its CV RMSE (6.765) is within 1 SE (0.087) of the best (LinearRegression: 6.765), providing maximum explainability.",
+  "cv_results": {
+    "LinearRegression": {
+      "rmse_mean": 6.764840053236543,
+      "rmse_std": 0.19440172807946593,
+      "rmse_se": 0.08693909578582308,
+      "mae_mean": 5.391317663139661,
+      "r2_mean": 0.7469297818854964,
+      "best_params": {}
+    },
+    "RandomForest": {
+      "rmse_mean": 6.8186282084485965,
+      "rmse_std": 0.20120740817526803,
+      "rmse_se": 0.08998268845128925,
+      "mae_mean": 5.438141760758046,
+      "r2_mean": 0.7429089000844801,
+      "best_params": {
+        "max_depth": 6,
+        "min_samples_leaf": 2,
+        "n_estimators": 100
+      }
+    },
+    "GradientBoosting": {
+      "rmse_mean": 6.798521532680951,
+      "rmse_std": 0.20900736249124727,
+      "rmse_se": 0.09347093406567374,
+      "mae_mean": 5.421638447811245,
+      "r2_mean": 0.7444154043441927,
+      "best_params": {
+        "learning_rate": 0.05,
+        "max_depth": 3,
+        "n_estimators": 100
+      }
+    },
+    "selection": {
+      "chosen_model": "LinearRegression",
+      "reason": "LinearRegression selected because its CV RMSE (6.765) is within 1 SE (0.087) of the best (LinearRegression: 6.765), providing maximum explainability."
+    }
+  },
+  "test_regression_metrics": {
+    "LinearRegression": {
+      "mae": 5.1881,
+      "rmse": 6.5338,
+      "r2": 0.763
+    },
+    "RandomForest": {
+      "mae": 5.2112,
+      "rmse": 6.5665,
+      "r2": 0.7606
+    },
+    "GradientBoosting": {
+      "mae": 5.2004,
+      "rmse": 6.5494,
+      "r2": 0.7618
+    }
+  },
+  "ablation_study": {
+    "features": [
+      "study_hours_per_day",
+      "attendance_percentage",
+      "social_media_hours",
+      "series_1",
+      "series_2",
+      "series_avg",
+      "series_delta",
+      "age",
+      "gender"
+    ],
+    "metrics": {
+      "mae": 5.1885,
+      "rmse": 6.5353,
+      "r2": 0.7629
+    },
+    "commentary": "Adding demographic features (age and gender) yields virtually zero change in prediction accuracy, confirming that academic series marks drive all predictive signal."
+  },
+  "prediction_interval": {
+    "nominal_level": 0.9,
+    "half_width": 11.1229,
+    "test_coverage_pct": 91.15
+  },
+  "at_risk_evaluation": {
+    "40": {
+      "target_score": 40.0,
+      "risk_margin": 3.0,
+      "total_students": 2000,
+      "actual_at_risk_count": 222,
+      "prevalence": 0.111,
+      "prevalence_pct": 11.1,
+      "precision": 0.5858,
+      "recall": 0.6306,
+      "f1": 0.6074,
+      "confusion_matrix": {
+        "tp": 140,
+        "fp": 99,
+        "tn": 1679,
+        "fn": 82
+      }
+    },
+    "50": {
+      "target_score": 50.0,
+      "risk_margin": 3.0,
+      "total_students": 2000,
+      "actual_at_risk_count": 626,
+      "prevalence": 0.313,
+      "prevalence_pct": 31.3,
+      "precision": 0.7192,
+      "recall": 0.8674,
+      "f1": 0.7864,
+      "confusion_matrix": {
+        "tp": 543,
+        "fp": 212,
+        "tn": 1162,
+        "fn": 83
+      }
+    }
+  },
+  "fairness_audit": {
+    "gender": [
+      {
+        "group": "Female",
+        "count": 909,
+        "share_pct": 45.45,
+        "mae": 5.1331,
+        "mean_residual": 0.156,
+        "at_risk_recall": 0.6292,
+        "at_risk_precision": 0.5545,
+        "notes": "Adequate sample size"
+      },
+      {
+        "group": "Male",
+        "count": 1022,
+        "share_pct": 51.1,
+        "mae": 5.2129,
+        "mean_residual": -0.2339,
+        "at_risk_recall": 0.6333,
+        "at_risk_precision": 0.608,
+        "notes": "Adequate sample size"
+      },
+      {
+        "group": "Other",
+        "count": 69,
+        "share_pct": 3.45,
+        "mae": 5.5469,
+        "mean_residual": -0.351,
+        "at_risk_recall": 0.6154,
+        "at_risk_precision": 0.6154,
+        "notes": "Sample size < 5% of cohort; treat estimates with caution"
+      }
+    ],
+    "age_band": [
+      {
+        "group": "<= 16",
+        "count": 550,
+        "share_pct": 27.5,
+        "mae": 5.4223,
+        "mean_residual": -0.3735,
+        "at_risk_recall": 0.6515,
+        "at_risk_precision": 0.5733,
+        "notes": "Adequate sample size"
+      },
+      {
+        "group": "17 - 19",
+        "count": 557,
+        "share_pct": 27.85,
+        "mae": 5.3764,
+        "mean_residual": -0.0196,
+        "at_risk_recall": 0.6143,
+        "at_risk_precision": 0.6615,
+        "notes": "Adequate sample size"
+      },
+      {
+        "group": "20 - 22",
+        "count": 549,
+        "share_pct": 27.45,
+        "mae": 4.9316,
+        "mean_residual": 0.1899,
+        "at_risk_recall": 0.6379,
+        "at_risk_precision": 0.5968,
+        "notes": "Adequate sample size"
+      },
+      {
+        "group": "23+",
+        "count": 344,
+        "share_pct": 17.2,
+        "mae": 4.9184,
+        "mean_residual": -0.0272,
+        "at_risk_recall": 0.6071,
+        "at_risk_precision": 0.4595,
+        "notes": "Adequate sample size"
+      }
+    ]
+  },
+  "priority_queue_vs_baselines": [
+    {
+      "capacity": 10,
+      "total_at_risk_in_cohort": 222,
+      "system_queue": {
+        "hits": 10,
+        "recall_at_n": 0.045,
+        "precision_at_n": 1.0
+      },
+      "baseline_predicted_score": {
+        "hits": 10,
+        "recall_at_n": 0.045,
+        "precision_at_n": 1.0
+      },
+      "baseline_series_avg": {
+        "hits": 10,
+        "recall_at_n": 0.045,
+        "precision_at_n": 1.0
+      },
+      "overlap_with_pred_baseline": 0.1,
+      "overlap_with_series_baseline": 0.1
+    },
+    {
+      "capacity": 25,
+      "total_at_risk_in_cohort": 222,
+      "system_queue": {
+        "hits": 22,
+        "recall_at_n": 0.0991,
+        "precision_at_n": 0.88
+      },
+      "baseline_predicted_score": {
+        "hits": 23,
+        "recall_at_n": 0.1036,
+        "precision_at_n": 0.92
+      },
+      "baseline_series_avg": {
+        "hits": 23,
+        "recall_at_n": 0.1036,
+        "precision_at_n": 0.92
+      },
+      "overlap_with_pred_baseline": 0.32,
+      "overlap_with_series_baseline": 0.36
+    },
+    {
+      "capacity": 50,
+      "total_at_risk_in_cohort": 222,
+      "system_queue": {
+        "hits": 41,
+        "recall_at_n": 0.1847,
+        "precision_at_n": 0.82
+      },
+      "baseline_predicted_score": {
+        "hits": 45,
+        "recall_at_n": 0.2027,
+        "precision_at_n": 0.9
+      },
+      "baseline_series_avg": {
+        "hits": 47,
+        "recall_at_n": 0.2117,
+        "precision_at_n": 0.94
+      },
+      "overlap_with_pred_baseline": 0.74,
+      "overlap_with_series_baseline": 0.74
+    },
+    {
+      "capacity": 100,
+      "total_at_risk_in_cohort": 222,
+      "system_queue": {
+        "hits": 74,
+        "recall_at_n": 0.3333,
+        "precision_at_n": 0.74
+      },
+      "baseline_predicted_score": {
+        "hits": 78,
+        "recall_at_n": 0.3514,
+        "precision_at_n": 0.78
+      },
+      "baseline_series_avg": {
+        "hits": 79,
+        "recall_at_n": 0.3559,
+        "precision_at_n": 0.79
+      },
+      "overlap_with_pred_baseline": 0.83,
+      "overlap_with_series_baseline": 0.83
+    }
+  ]
+}

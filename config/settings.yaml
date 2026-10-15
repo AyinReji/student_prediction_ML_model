@@ -1,0 +1,21 @@
+target_score: 40
+risk_margin: 3
+capacity: 25
+interval_level: 0.90
+rules:
+  low_series_avg: 18.0
+  decline_points: 4.0
+  min_attendance: 75.0
+  min_study_hours: 2.0
+  max_social_hours: 4.0
+priority_weights:
+  risk: 0.7
+  decline: 0.2
+  flags: 0.1
+risk_badges:
+  high: 0.6
+  medium: 0.3
+split:
+  test_size: 0.2
+  seed: 42
+cv_folds: 5
