@@ -1,7 +1,11 @@
 {
-  "residual_mean": -0.0026,
-  "residual_std": 6.7675,
+  "residual_mean": -0.0005,
+  "residual_std": 6.7629,
   "interval_level": 0.9,
-  "interval_half_width": 11.1229,
-  "count": 8000
+  "interval_half_width": 11.1461,
+  "count": 8000,
+  "regression_features": [
+    "series_1",
+    "series_2"
+  ]
 }

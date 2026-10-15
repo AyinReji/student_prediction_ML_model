@@ -172,8 +172,35 @@ with col_right:
     </div>
     """, unsafe_allow_html=True)
 
+st.markdown("---")
+st.subheader("⚡ Instant Exam Score Forecaster")
+st.markdown("Test the production Linear Regression model directly by adjusting student assessment marks:")
+
+fc_c1, fc_c2, fc_c3 = st.columns([1, 1, 1.2])
+with fc_c1:
+    quick_s1 = st.slider("Series 1 Exam Mark (0 – 40)", min_value=0.0, max_value=40.0, value=22.0, step=0.5, key="quick_s1")
+with fc_c2:
+    quick_s2 = st.slider("Series 2 Exam Mark (0 – 40)", min_value=0.0, max_value=40.0, value=24.5, step=0.5, key="quick_s2")
+with fc_c3:
+    quick_df = pd.DataFrame([{"series_1": quick_s1, "series_2": quick_s2}])
+    quick_pred = float(model.predict(quick_df)[0])
+    quick_pred_bounded = round(float(np.clip(quick_pred, 0.0, 100.0)), 1)
+    hw = float(oof_res.get("interval_half_width", 11.15))
+    is_at_risk = quick_pred_bounded < (settings.target_score + settings.risk_margin)
+    color = "#DC2626" if is_at_risk else "#16A34A"
+    status = "⚠️ At-Risk" if is_at_risk else "✅ On Track"
+    st.markdown(f"""
+    <div class="metric-card" style="border-top: 4px solid {color}; padding: 14px 18px;">
+        <div class="metric-title">Predicted Final Score: <span style="font-size: 1.6rem; color: {color}; font-weight: 700;">{quick_pred_bounded} / 100</span></div>
+        <div class="metric-subtitle">90% Interval: [{max(0.0, quick_pred_bounded - hw):.1f}, {min(100.0, quick_pred_bounded + hw):.1f}] | Status: <b style="color: {color};">{status}</b></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("---")
 st.subheader("🚀 Quick Navigation")
-nav1, nav2, nav3, nav4 = st.columns(4)
+nav0, nav1, nav2, nav3, nav4 = st.columns(5)
+with nav0:
+    st.markdown("🔮 **[Model Prediction](Model_Prediction)**\n\nInput student parameters to generate real-time exam forecasts and intervals.")
 with nav1:
     st.markdown("🎯 **[Priority Queue](Priority_Queue)**\n\nRank students by intervention need within teacher capacity.")
 with nav2:
@@ -181,4 +208,4 @@ with nav2:
 with nav3:
     st.markdown("📈 **[Progress Tracking](Progress_Tracking)**\n\nLog subsequent assessments and monitor trajectories over time.")
 with nav4:
-    st.markdown("🔬 **[Model Evaluation](Model_Evaluation)**\n\nCompare 3 algorithms, fairness audits, and baseline comparisons.")
+    st.markdown("🔬 **[Model Evaluation](Model_Evaluation)**\n\nCompare algorithms, fairness audits, and baseline comparisons.")

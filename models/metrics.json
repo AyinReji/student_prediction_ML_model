@@ -1,33 +1,69 @@
 {
   "chosen_model": "LinearRegression",
-  "selection_rationale": "LinearRegression selected because its CV RMSE (6.765) is within 1 SE (0.087) of the best (LinearRegression: 6.765), providing maximum explainability.",
+  "selection_rationale": "LinearRegression selected because its CV RMSE (6.760) is within 1 SE (0.089) of the best (Ridge: 6.760), providing maximum explainability.",
+  "regression_features": [
+    "series_1",
+    "series_2"
+  ],
+  "feature_policy": "Only series_1 and series_2 are authorized predictive inputs. Lifestyle features (study hours, attendance, social media) are conversational indicators and do not enter the regression model.",
   "cv_results": {
     "LinearRegression": {
-      "rmse_mean": 6.764840053236543,
-      "rmse_std": 0.19440172807946593,
-      "rmse_se": 0.08693909578582308,
-      "mae_mean": 5.391317663139661,
-      "r2_mean": 0.7469297818854964,
+      "rmse_mean": 6.760148974719871,
+      "rmse_std": 0.19803616869952176,
+      "rmse_se": 0.08856446704314935,
+      "mae_mean": 5.387017518250142,
+      "r2_mean": 0.74727308875683,
       "best_params": {}
     },
+    "Ridge": {
+      "rmse_mean": 6.760148254266214,
+      "rmse_std": 0.19804892705238666,
+      "rmse_se": 0.08857017275200672,
+      "mae_mean": 5.387026642458126,
+      "r2_mean": 0.7472731639410845,
+      "best_params": {
+        "alpha": 1.0
+      }
+    },
+    "Lasso": {
+      "rmse_mean": 6.760148801423815,
+      "rmse_std": 0.19804086102192112,
+      "rmse_se": 0.08856656551352081,
+      "mae_mean": 5.38702361256419,
+      "r2_mean": 0.7472731039941911,
+      "best_params": {
+        "alpha": 0.001
+      }
+    },
+    "ElasticNet": {
+      "rmse_mean": 6.760168861092661,
+      "rmse_std": 0.1982985656473962,
+      "rmse_se": 0.0886818145256565,
+      "mae_mean": 5.387230634149633,
+      "r2_mean": 0.7472720213103947,
+      "best_params": {
+        "alpha": 0.01,
+        "l1_ratio": 0.8
+      }
+    },
     "RandomForest": {
-      "rmse_mean": 6.8186282084485965,
-      "rmse_std": 0.20120740817526803,
-      "rmse_se": 0.08998268845128925,
-      "mae_mean": 5.438141760758046,
-      "r2_mean": 0.7429089000844801,
+      "rmse_mean": 6.806188167981695,
+      "rmse_std": 0.22364197220891724,
+      "rmse_se": 0.10001573049625155,
+      "mae_mean": 5.4176438383037935,
+      "r2_mean": 0.7438266195305379,
       "best_params": {
         "max_depth": 6,
-        "min_samples_leaf": 2,
-        "n_estimators": 100
+        "min_samples_leaf": 10,
+        "n_estimators": 200
       }
     },
     "GradientBoosting": {
-      "rmse_mean": 6.798521532680951,
-      "rmse_std": 0.20900736249124727,
-      "rmse_se": 0.09347093406567374,
-      "mae_mean": 5.421638447811245,
-      "r2_mean": 0.7444154043441927,
+      "rmse_mean": 6.800820174010575,
+      "rmse_std": 0.21452094874863187,
+      "rmse_se": 0.09593668479993786,
+      "mae_mean": 5.411830402879181,
+      "r2_mean": 0.7442113837335915,
       "best_params": {
         "learning_rate": 0.05,
         "max_depth": 3,
@@ -36,49 +72,112 @@
     },
     "selection": {
       "chosen_model": "LinearRegression",
-      "reason": "LinearRegression selected because its CV RMSE (6.765) is within 1 SE (0.087) of the best (LinearRegression: 6.765), providing maximum explainability."
+      "reason": "LinearRegression selected because its CV RMSE (6.760) is within 1 SE (0.089) of the best (Ridge: 6.760), providing maximum explainability."
     }
   },
   "test_regression_metrics": {
     "LinearRegression": {
-      "mae": 5.1881,
-      "rmse": 6.5338,
-      "r2": 0.763
+      "mae": 5.187,
+      "rmse": 6.5324,
+      "r2": 0.7631
+    },
+    "Ridge": {
+      "mae": 5.187,
+      "rmse": 6.5324,
+      "r2": 0.7631
+    },
+    "Lasso": {
+      "mae": 5.187,
+      "rmse": 6.5323,
+      "r2": 0.7631
+    },
+    "ElasticNet": {
+      "mae": 5.1871,
+      "rmse": 6.5327,
+      "r2": 0.7631
     },
     "RandomForest": {
-      "mae": 5.2112,
-      "rmse": 6.5665,
-      "r2": 0.7606
+      "mae": 5.2376,
+      "rmse": 6.5929,
+      "r2": 0.7587
     },
     "GradientBoosting": {
-      "mae": 5.2004,
-      "rmse": 6.5494,
-      "r2": 0.7618
+      "mae": 5.2195,
+      "rmse": 6.5721,
+      "r2": 0.7602
     }
   },
-  "ablation_study": {
-    "features": [
-      "study_hours_per_day",
-      "attendance_percentage",
-      "social_media_hours",
-      "series_1",
-      "series_2",
-      "series_avg",
-      "series_delta",
-      "age",
-      "gender"
+  "feature_investigation": {
+    "series_1_target_correlation": 0.8246,
+    "series_2_target_correlation": 0.8217,
+    "series_1_series_2_correlation": 0.812,
+    "series_1_range": [
+      0.0,
+      40.0
     ],
-    "metrics": {
-      "mae": 5.1885,
-      "rmse": 6.5353,
-      "r2": 0.7629
+    "series_2_range": [
+      0.0,
+      40.0
+    ],
+    "target_range": [
+      12.7,
+      95.8
+    ],
+    "two_feature_r2": 0.7631,
+    "all_feature_r2": 0.763,
+    "r2_difference": -0.0001,
+    "conclusion": "The two authorized regression features (series_1, series_2) capture the vast majority of predictive signal. Lifestyle features contribute negligible additional R\u00b2 (<0.01), confirming they should not be used as predictors of final examination marks."
+  },
+  "ablation_study": {
+    "two_feature_model": {
+      "features": [
+        "series_1",
+        "series_2"
+      ],
+      "metrics": {
+        "mae": 5.187,
+        "rmse": 6.5324,
+        "r2": 0.7631
+      }
     },
-    "commentary": "Adding demographic features (age and gender) yields virtually zero change in prediction accuracy, confirming that academic series marks drive all predictive signal."
+    "all_feature_model": {
+      "features": [
+        "series_1",
+        "series_2",
+        "study_hours_per_day",
+        "attendance_percentage",
+        "social_media_hours",
+        "series_avg",
+        "series_delta"
+      ],
+      "metrics": {
+        "mae": 5.1881,
+        "rmse": 6.5338,
+        "r2": 0.763
+      }
+    },
+    "demographic_model": {
+      "features": [
+        "series_1",
+        "series_2",
+        "study_hours_per_day",
+        "attendance_percentage",
+        "social_media_hours",
+        "age",
+        "gender"
+      ],
+      "metrics": {
+        "mae": 5.1885,
+        "rmse": 6.5353,
+        "r2": 0.7629
+      }
+    },
+    "commentary": "Adding lifestyle and demographic features yields virtually zero change in prediction accuracy, confirming that series_1 and series_2 drive all predictive signal for final exam scores."
   },
   "prediction_interval": {
     "nominal_level": 0.9,
-    "half_width": 11.1229,
-    "test_coverage_pct": 91.15
+    "half_width": 11.1461,
+    "test_coverage_pct": 91.4
   },
   "at_risk_evaluation": {
     "40": {
@@ -88,13 +187,13 @@
       "actual_at_risk_count": 222,
       "prevalence": 0.111,
       "prevalence_pct": 11.1,
-      "precision": 0.5858,
+      "precision": 0.5809,
       "recall": 0.6306,
-      "f1": 0.6074,
+      "f1": 0.6048,
       "confusion_matrix": {
         "tp": 140,
-        "fp": 99,
-        "tn": 1679,
+        "fp": 101,
+        "tn": 1677,
         "fn": 82
       }
     },
@@ -122,18 +221,18 @@
         "group": "Female",
         "count": 909,
         "share_pct": 45.45,
-        "mae": 5.1331,
-        "mean_residual": 0.156,
+        "mae": 5.1323,
+        "mean_residual": 0.1592,
         "at_risk_recall": 0.6292,
-        "at_risk_precision": 0.5545,
+        "at_risk_precision": 0.5437,
         "notes": "Adequate sample size"
       },
       {
         "group": "Male",
         "count": 1022,
         "share_pct": 51.1,
-        "mae": 5.2129,
-        "mean_residual": -0.2339,
+        "mae": 5.2121,
+        "mean_residual": -0.2332,
         "at_risk_recall": 0.6333,
         "at_risk_precision": 0.608,
         "notes": "Adequate sample size"
@@ -142,8 +241,8 @@
         "group": "Other",
         "count": 69,
         "share_pct": 3.45,
-        "mae": 5.5469,
-        "mean_residual": -0.351,
+        "mae": 5.5362,
+        "mean_residual": -0.337,
         "at_risk_recall": 0.6154,
         "at_risk_precision": 0.6154,
         "notes": "Sample size < 5% of cohort; treat estimates with caution"
@@ -154,8 +253,8 @@
         "group": "<= 16",
         "count": 550,
         "share_pct": 27.5,
-        "mae": 5.4223,
-        "mean_residual": -0.3735,
+        "mae": 5.4211,
+        "mean_residual": -0.37,
         "at_risk_recall": 0.6515,
         "at_risk_precision": 0.5733,
         "notes": "Adequate sample size"
@@ -164,8 +263,8 @@
         "group": "17 - 19",
         "count": 557,
         "share_pct": 27.85,
-        "mae": 5.3764,
-        "mean_residual": -0.0196,
+        "mae": 5.3801,
+        "mean_residual": -0.0143,
         "at_risk_recall": 0.6143,
         "at_risk_precision": 0.6615,
         "notes": "Adequate sample size"
@@ -174,18 +273,18 @@
         "group": "20 - 22",
         "count": 549,
         "share_pct": 27.45,
-        "mae": 4.9316,
-        "mean_residual": 0.1899,
+        "mae": 4.9286,
+        "mean_residual": 0.1898,
         "at_risk_recall": 0.6379,
-        "at_risk_precision": 0.5968,
+        "at_risk_precision": 0.5781,
         "notes": "Adequate sample size"
       },
       {
         "group": "23+",
         "count": 344,
         "share_pct": 17.2,
-        "mae": 4.9184,
-        "mean_residual": -0.0272,
+        "mae": 4.9124,
+        "mean_residual": -0.028,
         "at_risk_recall": 0.6071,
         "at_risk_precision": 0.4595,
         "notes": "Adequate sample size"
@@ -244,16 +343,16 @@
         "precision_at_n": 0.82
       },
       "baseline_predicted_score": {
-        "hits": 45,
-        "recall_at_n": 0.2027,
-        "precision_at_n": 0.9
+        "hits": 46,
+        "recall_at_n": 0.2072,
+        "precision_at_n": 0.92
       },
       "baseline_series_avg": {
         "hits": 47,
         "recall_at_n": 0.2117,
         "precision_at_n": 0.94
       },
-      "overlap_with_pred_baseline": 0.74,
+      "overlap_with_pred_baseline": 0.72,
       "overlap_with_series_baseline": 0.74
     },
     {
@@ -265,9 +364,9 @@
         "precision_at_n": 0.74
       },
       "baseline_predicted_score": {
-        "hits": 78,
-        "recall_at_n": 0.3514,
-        "precision_at_n": 0.78
+        "hits": 79,
+        "recall_at_n": 0.3559,
+        "precision_at_n": 0.79
       },
       "baseline_series_avg": {
         "hits": 79,
