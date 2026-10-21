@@ -26,16 +26,35 @@ LIFESTYLE_FEATURES = [
     "social_media_hours",
 ]
 
-# Complete authorized feature vector for the expanded regression model
-EXPANDED_FEATURES = ACADEMIC_FEATURES + LIFESTYLE_FEATURES
+DEMOGRAPHIC_FEATURES = [
+    "age",
+    "gender",
+]
+
+NUMERIC_FEATURES = [
+    "series_1",
+    "series_2",
+    "study_hours_per_day",
+    "attendance_percentage",
+    "social_media_hours",
+    "age",
+]
+
+CATEGORICAL_FEATURES = [
+    "gender",
+]
+
+# Complete feature vector incorporating every feature of the dataset
+ALL_FEATURES = NUMERIC_FEATURES + CATEGORICAL_FEATURES
+EXPANDED_FEATURES = ALL_FEATURES
 
 # Aliases ensuring backward and forward compatibility across training & inference
-REGRESSION_FEATURES = EXPANDED_FEATURES
-DEFAULT_FEATURE_COLS = EXPANDED_FEATURES
-ALL_STUDENT_FEATURES = EXPANDED_FEATURES
+REGRESSION_FEATURES = ALL_FEATURES
+DEFAULT_FEATURE_COLS = ALL_FEATURES
+ALL_STUDENT_FEATURES = ALL_FEATURES
 
-# Ablation study features (includes demographics for fairness comparison)
-ABLATION_FEATURE_COLS = EXPANDED_FEATURES + ["age", "gender"]
+# Ablation study features
+ABLATION_FEATURE_COLS = ALL_FEATURES
 
 TARGET_COL = "final_exam_score"
 PROTECTED_COLS = ["age", "gender"]

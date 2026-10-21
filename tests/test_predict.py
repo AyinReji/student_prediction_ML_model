@@ -58,6 +58,8 @@ def test_prediction_consistency_with_direct_pipeline():
         "study_hours_per_day": float(sample_row["study_hours_per_day"]),
         "attendance_percentage": float(sample_row["attendance_percentage"]),
         "social_media_hours": float(sample_row["social_media_hours"]),
+        "age": float(sample_row["age"]),
+        "gender": str(sample_row["gender"]),
     }
 
     result = predict_student_performance(raw_input)
@@ -79,6 +81,8 @@ def test_lifestyle_features_contribute_to_expanded_prediction():
         "study_hours_per_day": 2.0,
         "attendance_percentage": 60.0,
         "social_media_hours": 2.0,
+        "age": 18.0,
+        "gender": "Female",
     }
     pred_base = predict_student_performance(base_student)
 
@@ -86,14 +90,13 @@ def test_lifestyle_features_contribute_to_expanded_prediction():
     varied_study = {**base_student, "study_hours_per_day": 10.0}
     pred_study = predict_student_performance(varied_study)
 
-    # The model has learned a positive coefficient for study hours (~0.035 pts/hr)
-    # So increasing study hours by 8 hours should increase raw prediction
+    # Increasing study hours should increase prediction
     assert pred_study["raw_prediction"] != pred_base["raw_prediction"]
     assert pred_study["raw_prediction"] > pred_base["raw_prediction"]
 
-    # Verify all 5 features are explained
+    # Verify features are explained
     contrib_features = [c["feature"] for c in pred_base["contributions"]]
     assert "series_1" in contrib_features
     assert "series_2" in contrib_features
-    assert any(f in contrib_features for f in ["study_hours_per_day", "social_media_hours", "attendance_percentage"])
+    assert any(f in contrib_features for f in ["study_hours_per_day", "social_media_hours", "attendance_percentage", "age", "gender"])
 

@@ -1,7 +1,7 @@
-target_score: 40
-risk_margin: 3
+target_score: 50.0
+risk_margin: 3.0
 capacity: 25
-interval_level: 0.90
+interval_level: 0.9
 rules:
   low_series_avg: 18.0
   decline_points: 4.0

@@ -22,10 +22,10 @@ RULES_METADATA = {
         "info_note": "Trajectory between series 1 and series 2 indicates momentum changes.",
     },
     "attendance_concern": {
-        "name": "Attendance concern",
+        "name": "Attendance Concern (Exam Ineligibility)",
         "category": "lifestyle",
         "label": "Indicator only",
-        "action": "Have a conversation about barriers to attending.",
+        "action": "Attendance is below 75%; student cannot attend the final examination under institutional policy. Arrange urgent review.",
         "info_note": INDICATOR_DISCLAIMER,
     },
     "low_study_time": {
@@ -92,7 +92,7 @@ def evaluate_student_rules(student_row: pd.Series | dict[str, Any], settings: Se
         fired_rules.append({
             "rule_id": "attendance_concern",
             "name": meta["name"],
-            "trigger": f"Attendance is {attendance:.1f}% (threshold < {rules_cfg.min_attendance:.1f}%)",
+            "trigger": f"Attendance is {attendance:.1f}% (threshold < {rules_cfg.min_attendance:.1f}% mandatory minimum; student cannot attend exam)",
             "action": meta["action"],
             "label": meta["label"],
             "info_note": meta["info_note"],

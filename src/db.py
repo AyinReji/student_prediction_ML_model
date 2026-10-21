@@ -83,7 +83,15 @@ def init_db(force_reload: bool = False) -> None:
     try:
         count = session.query(Student).count()
         if count == 0 or force_reload:
-            raw_path = Path("data/raw/student_performance_10000-1.csv")
+            if force_reload:
+                session.query(Assessment).delete()
+                session.query(FollowUp).delete()
+                session.query(Student).delete()
+                session.commit()
+
+            raw_path = Path("data/raw/student_performance_5000.csv")
+            if not raw_path.exists():
+                raw_path = Path("data/raw/student_performance_10000-1.csv")
             if not raw_path.exists():
                 raw_path = Path("student_performance_10000-1.csv")
             df = pd.read_csv(raw_path)

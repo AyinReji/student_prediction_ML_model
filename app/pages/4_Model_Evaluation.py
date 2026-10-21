@@ -15,9 +15,11 @@ import streamlit as st
 
 from app.ui_utils import (
     apply_custom_styles,
+    info_btn,
     load_app_data,
     load_app_model,
     load_metrics_and_residuals,
+    render_glossary_popover,
     render_sidebar_controls,
 )
 from src.features import REGRESSION_FEATURES, TARGET_COL
@@ -26,49 +28,56 @@ st.set_page_config(page_title="Model Evaluation | Student Support", page_icon="�
 apply_custom_styles()
 settings = render_sidebar_controls()
 
-st.title("Model Evaluation & Empirical Comparison")
-st.caption("Rigorous evaluation on the held-out 20% test cohort (2,000 students) comparing academic-only vs. expanded feature models.")
+head_c1, head_c2 = st.columns([3, 1])
+with head_c1:
+    st.title("Model Evaluation & Empirical Comparison")
+with head_c2:
+    st.write("")
+    render_glossary_popover()
 
 model = load_app_model()
 train_df, test_df = load_app_data()
 metrics, oof_res = load_metrics_and_residuals()
+
+test_count = len(test_df) if not test_df.empty else 1000
+st.caption(f"Rigorous evaluation on the held-out 20% test cohort ({test_count:,} students) comparing academic-only vs. all-feature models.")
 
 if not metrics or model is None or test_df.empty:
     st.warning("Model evaluation artifacts not found. Please run `python -m src.train`.")
     st.stop()
 
 # ── 1. Academic-Only vs. Expanded Model Comparison ─────────────────────
-st.subheader("1. Model Comparison: Academic-Only vs. Expanded Features")
-st.caption("Identical 80% train / 20% test split (2,000 held-out students):")
+st.markdown(f"### 1. Model Comparison: Academic-Only vs. All-Feature Model {info_btn('lifestyle_influence')}", unsafe_allow_html=True)
+st.caption(f"Identical 80% train / 20% test split ({test_count:,} held-out students):")
 
 comp_data = metrics.get("model_comparison", {})
-acad_info = comp_data.get("academic_only", {"mae": 5.187, "rmse": 6.5324, "r2": 0.7631})
-exp_info = comp_data.get("expanded_model", {"mae": 5.1881, "rmse": 6.5332, "r2": 0.7630})
-deltas = comp_data.get("deltas", {"mae_delta": 0.0011, "rmse_delta": 0.0008, "r2_delta": -0.0001})
+acad_info = comp_data.get("academic_only", {"mae": 7.188, "rmse": 8.790, "r2": 0.624})
+exp_info = comp_data.get("expanded_model", {"mae": 6.960, "rmse": 8.498, "r2": 0.650})
+deltas = comp_data.get("deltas", {"mae_delta": -0.228, "rmse_delta": -0.292, "r2_delta": 0.026})
 
 m1, m2, m3 = st.columns(3)
 with m1:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-title">Test MAE Comparison</div>
+        <div class="metric-title">Test MAE Comparison {info_btn('mae')}</div>
         <div class="metric-value">{exp_info['mae']:.2f} <span style="font-size: 0.85rem; color: #64748B;">vs {acad_info['mae']:.2f}</span></div>
-        <div class="metric-subtitle">Delta: {deltas['mae_delta']:+0.4f} pts (Expanded vs Academic)</div>
+        <div class="metric-subtitle">Delta: {deltas['mae_delta']:+0.4f} pts (All-Features vs Academic)</div>
     </div>
     """, unsafe_allow_html=True)
 
 with m2:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-title">Test RMSE Comparison</div>
+        <div class="metric-title">Test RMSE Comparison {info_btn('rmse')}</div>
         <div class="metric-value">{exp_info['rmse']:.2f} <span style="font-size: 0.85rem; color: #64748B;">vs {acad_info['rmse']:.2f}</span></div>
-        <div class="metric-subtitle">Delta: {deltas['rmse_delta']:+0.4f} pts (Expanded vs Academic)</div>
+        <div class="metric-subtitle">Delta: {deltas['rmse_delta']:+0.4f} pts (All-Features vs Academic)</div>
     </div>
     """, unsafe_allow_html=True)
 
 with m3:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-title">Test R² Comparison</div>
+        <div class="metric-title">Test R² Comparison {info_btn('r2')}</div>
         <div class="metric-value">{exp_info['r2']:.3f} <span style="font-size: 0.85rem; color: #64748B;">vs {acad_info['r2']:.3f}</span></div>
         <div class="metric-subtitle">Delta: {deltas['r2_delta']:+0.4f} variance explained</div>
     </div>
@@ -118,22 +127,23 @@ with chart_col1:
     st.plotly_chart(fig_bar, use_container_width=True)
 
 with chart_col2:
-    st.markdown("""
+    st.markdown(f"""
     <div class="info-box" style="margin-top: 25px;">
-        <b>Empirical Conclusion on Lifestyle Features:</b><br>
+        <b>Empirical Conclusion on All Features:</b> {info_btn('lifestyle_influence')}<br>
         Rigorous evaluation on the held-out test cohort demonstrates that incorporating lifestyle attributes 
-        (study hours, attendance rate, social media time) produces virtually <b>no meaningful change in generalization performance</b> 
-        (MAE delta: <b>+0.0011 pts</b>, R² delta: <b>-0.0001</b>).<br><br>
-        <b>Series 1 and Series 2 internal marks carry essentially all predictive signal</b> for the final examination score. 
-        Lifestyle attributes receive small learned regression weights and remain valuable for personalized support discussions.
+        (daily study hours, attendance percentage, social media hours) along with demographic attributes 
+        <b>measurably improves test generalization performance</b> (Test MAE improved from <b>{acad_info['mae']:.2f}</b> to <b>{exp_info['mae']:.2f} pts</b>; 
+        Test R² increased from <b>{acad_info['r2']:.3f}</b> to <b>{exp_info['r2']:.3f}</b>).<br><br>
+        Every feature in the 5,000-student dataset carries learned predictive weight:
+        study hours (+1.305 pts/hr) and attendance (+0.109 pts/%) positively support scores, while social media (−0.652 pts/hr) reduces forecasted performance.
     </div>
     """, unsafe_allow_html=True)
 
 st.markdown("---")
 
 # ── 2. Feature Contributions & Permutation Importance ─────────────────
-st.subheader("2. Feature Contributions & Permutation Importance")
-st.caption("Permutation importance computed on the 2,000-student held-out test set (10 random shuffles):")
+st.markdown(f"### 2. Feature Contributions & Permutation Importance {info_btn('permutation_importance')}", unsafe_allow_html=True)
+st.caption(f"Permutation importance computed on the {test_count:,}-student held-out test set (10 random shuffles):")
 
 perm_dict = metrics.get("permutation_importance", {})
 if perm_dict:
@@ -141,7 +151,7 @@ if perm_dict:
     for feat, vals in perm_dict.items():
         perm_table.append({
             "Feature Name": feat,
-            "Category": "Academic" if "series" in feat else "Lifestyle",
+            "Category": "Academic" if "series" in feat else "Lifestyle / Demographic",
             "Permutation Importance (R² Drop)": vals["importance_mean"],
             "Standard Deviation": f"±{vals['importance_std']:.4f}",
         })
@@ -157,7 +167,7 @@ if perm_dict:
             y="Feature Name",
             orientation="h",
             color="Category",
-            color_discrete_map={"Academic": "#2563EB", "Lifestyle": "#D97706"},
+            color_discrete_map={"Academic": "#2563EB", "Lifestyle / Demographic": "#D97706"},
             title="Feature Importance Ranking",
         )
         fig_perm.update_layout(template="plotly_white", height=240, margin=dict(l=10, r=10, t=30, b=10), yaxis=dict(autorange="reversed"))
@@ -167,6 +177,7 @@ if perm_dict:
 eq_info = metrics.get("linear_regression_equation", {})
 if eq_info:
     with st.expander("Fitted Linear Regression Equation"):
+        st.markdown(f"**Interpretable Linear Model:** {info_btn('linear_regression')}", unsafe_allow_html=True)
         st.markdown(f"**Unscaled Intercept:** `{eq_info.get('intercept', 13.78):.4f}`")
         coef_df = pd.DataFrame([
             {"Feature": f, "Learned Coefficient": c, "Unit Interpretation": f"{c:+.4f} marks per unit increase"}
@@ -177,7 +188,7 @@ if eq_info:
 st.markdown("---")
 
 # ── 3. Diagnostic Plots & Secondary Audits ─────────────────────────────
-st.subheader("3. Regression Diagnostics on Test Set")
+st.markdown(f"### 3. Regression Diagnostics on Test Set {info_btn('residual')}", unsafe_allow_html=True)
 X_test = test_df[REGRESSION_FEATURES]
 y_true = test_df[TARGET_COL].values
 y_pred = model.predict(X_test)
@@ -214,14 +225,16 @@ with c_diag2:
     st.plotly_chart(fig_res, use_container_width=True)
 
 with st.expander("Prediction Interval Calibration (90%)"):
+    st.markdown(f"**Empirical Out-of-Fold Calibration:** {info_btn('prediction_interval')} {info_btn('oof_residuals')}", unsafe_allow_html=True)
     interval_info = metrics.get("prediction_interval", {})
     st.markdown(f"""
     - **Nominal Level:** `90%`
-    - **Interval Half-Width:** `±{interval_info.get('half_width', 11.15):.2f} pts`
-    - **Empirical Coverage on Test Set:** `{interval_info.get('test_coverage_pct', 91.15):.1f}%`
+    - **Interval Half-Width:** `±{interval_info.get('half_width', 13.92):.2f} pts`
+    - **Empirical Coverage on Test Set:** `{interval_info.get('test_coverage_pct', 90.5):.1f}%`
     """)
 
 with st.expander("Fairness Audit across Demographics"):
+    st.markdown(f"**Demographic Parity & Subgroup MAE Audit:** {info_btn('fairness_audit')}", unsafe_allow_html=True)
     fairness = metrics.get("fairness_audit", {})
     gender_audit = fairness.get("gender", [])
     if gender_audit:

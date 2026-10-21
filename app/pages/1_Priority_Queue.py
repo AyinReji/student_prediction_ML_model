@@ -14,9 +14,11 @@ import numpy as np
 
 from app.ui_utils import (
     apply_custom_styles,
+    info_btn,
     load_app_data,
     load_app_model,
     load_metrics_and_residuals,
+    render_glossary_popover,
     render_sidebar_controls,
 )
 from src.features import REGRESSION_FEATURES
@@ -26,7 +28,12 @@ st.set_page_config(page_title="Priority Queue | Student Support", page_icon="�
 apply_custom_styles()
 settings = render_sidebar_controls()
 
-st.title("Teacher Priority Queue")
+head_c1, head_c2 = st.columns([3, 1])
+with head_c1:
+    st.title("Teacher Priority Queue")
+with head_c2:
+    st.write("")
+    render_glossary_popover()
 st.caption(f"Identifies the top {settings.capacity} students prioritized for intervention within teacher capacity.")
 
 model = load_app_model()
@@ -58,7 +65,7 @@ m1, m2, m3 = st.columns(3)
 with m1:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-title">Students Flagged</div>
+        <div class="metric-title">Students Flagged {info_btn('academic_risk_category')}</div>
         <div class="metric-value">{at_risk_count}</div>
         <div class="metric-subtitle">Score &lt; {settings.target_score + settings.risk_margin:.0f} pts threshold</div>
     </div>
@@ -67,7 +74,7 @@ with m1:
 with m2:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-title">High Priority in Queue</div>
+        <div class="metric-title">High Priority in Queue {info_btn('risk_probability')}</div>
         <div class="metric-value" style="color: #DC2626;">{high_priority_count}</div>
         <div class="metric-subtitle">Highest failure probability</div>
     </div>
@@ -76,7 +83,7 @@ with m2:
 with m3:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-title">Teacher Capacity (N)</div>
+        <div class="metric-title">Teacher Capacity (N) {info_btn('teacher_capacity')}</div>
         <div class="metric-value">{settings.capacity}</div>
         <div class="metric-subtitle">Active intervention limit</div>
     </div>
@@ -104,23 +111,33 @@ else:
             st.switch_page("pages/2_Student_Detail.py")
 
     # ── Compact Priority Table ────────────────────────────────────────
+    queue_df["exam_eligibility"] = queue_df["attendance_percentage"].apply(
+        lambda a: "Eligible" if a >= float(settings.rules.min_attendance) else "Ineligible (<75%)"  # noqa: E501
+    )
+
     display_df = queue_df[[
         "rank",
         "student_id",
         "predicted_score",
         "risk_badge",
+        "exam_eligibility",
         "priority_score",
+        "attendance_percentage",
         "series_1",
         "series_2",
         "top_reason",
     ]].copy()
+
+    display_df["attendance_percentage"] = display_df["attendance_percentage"].apply(lambda a: f"{a:.1f}%")
 
     display_df.columns = [
         "Rank",
         "Student ID",
         "Predicted Score",
         "Risk Category",
+        "Exam Eligibility",
         "Priority Score",
+        "Attendance",
         "Series 1 (/40)",
         "Series 2 (/40)",
         "Primary Concern",
@@ -144,9 +161,11 @@ else:
         )
 
     with st.expander("Priority Calculation Methodology"):
+        st.markdown(f"**Composite Priority Score Formula:** {info_btn('priority_score')}", unsafe_allow_html=True)
         st.markdown(f"""
         The queue ranks students within the teacher's capacity ($N={settings.capacity}$) by blending:
-        - **Failure Risk Probability ($w={settings.priority_weights.risk}$):** $P(\\text{{Final Score}} < {settings.target_score:.0f})$
-        - **Trajectory Decline ($w={settings.priority_weights.decline}$):** Score decrease from Series 1 to Series 2
+        - **Failure Risk Probability ($w={settings.priority_weights.risk}$):** $P(\\text{{Final Score}} < {settings.target_score:.0f})$ {info_btn('risk_probability')}
+        - **Trajectory Decline ($w={settings.priority_weights.decline}$):** Score decrease from Series 1 to Series 2 {info_btn('series_delta')}
         - **Pedagogical Rule Alerts ($w={settings.priority_weights.flags}$):** Share of triggered support guidelines
-        """)
+        - **Exam Eligibility:** {info_btn('exam_eligibility')}
+        """, unsafe_allow_html=True)

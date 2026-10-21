@@ -14,9 +14,11 @@ import streamlit as st
 
 from app.ui_utils import (
     apply_custom_styles,
+    info_btn,
     load_app_data,
     load_app_model,
     load_metrics_and_residuals,
+    render_glossary_popover,
     render_sidebar_controls,
 )
 from src.db import get_followups, log_followup
@@ -29,7 +31,12 @@ st.set_page_config(page_title="Student Detail | Student Support", page_icon="�
 apply_custom_styles()
 settings = render_sidebar_controls()
 
-st.title("Student Support Diagnostic")
+head_c1, head_c2 = st.columns([3, 1])
+with head_c1:
+    st.title("Student Support Diagnostic")
+with head_c2:
+    st.write("")
+    render_glossary_popover()
 st.caption("Individual assessment profile, score prediction interval, and intervention tracking.")
 
 model = load_app_model()
@@ -88,12 +95,22 @@ else:
     badge_style = "risk-badge-low"
 
 # ── Metric Row ────────────────────────────────────────────────────────
+attendance_pct = float(student_row.get("attendance_percentage", 100))
+is_exam_eligible = attendance_pct >= float(settings.rules.min_attendance)
+
+if not is_exam_eligible:
+    st.error(
+        f"🚫 **EXAM INELIGIBILITY WARNING:** Student attendance is **{attendance_pct:.1f}%** "
+        f"(below the mandatory {settings.rules.min_attendance:.0f}% requirement). "
+        "**Under institutional policy, this student cannot attend the final examination.**"
+    )
+
 c1, c2, c3, c4 = st.columns(4)
 
 with c1:
     st.markdown(f"""
     <div class="metric-card" style="border-top: 4px solid {status_color};">
-        <div class="metric-title">Predicted Final Score</div>
+        <div class="metric-title">Predicted Final Score {info_btn('predicted_final_score')}</div>
         <div class="metric-value" style="color: {status_color};">{pred_score_bounded:.1f} <span style="font-size: 0.9rem; color: #64748B;">/ 100</span></div>
         <div class="metric-subtitle">Forecasted mark</div>
     </div>
@@ -102,7 +119,7 @@ with c1:
 with c2:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-title">Prediction Interval (90%)</div>
+        <div class="metric-title">Prediction Interval (90%) {info_btn('prediction_interval')}</div>
         <div class="metric-value" style="font-size: 1.45rem;">[{lower_bound:.1f}, {upper_bound:.1f}]</div>
         <div class="metric-subtitle">Margin ±{half_width:.1f} pts</div>
     </div>
@@ -111,7 +128,7 @@ with c2:
 with c3:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-title">Risk Level</div>
+        <div class="metric-title">Risk Level {info_btn('risk_probability')}</div>
         <div class="metric-value"><span class="{badge_style}">{risk_badge} Risk</span></div>
         <div class="metric-subtitle">Probability: {p_risk*100:.1f}%</div>
     </div>
@@ -120,7 +137,7 @@ with c3:
 with c4:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-title">Academic Status</div>
+        <div class="metric-title">Academic Status {info_btn('academic_risk_category')}</div>
         <div class="metric-value" style="color: {status_color}; font-size: 1.3rem;">{status_text}</div>
         <div class="metric-subtitle">Target {settings.target_score:.0f} pts (+{settings.risk_margin:.0f} buffer)</div>
     </div>
@@ -131,32 +148,41 @@ st.markdown("---")
 col_perf, col_rules = st.columns([1.1, 1.3])
 
 with col_perf:
-    st.subheader("Assessment Performance")
+    st.markdown(f"#### Assessment Performance {info_btn('series_1')} {info_btn('series_2')}", unsafe_allow_html=True)
     s1 = float(student_row["series_1"])
     s2 = float(student_row["series_2"])
     delta = s2 - s1
     delta_color = "#16A34A" if delta >= 0 else "#DC2626"
 
     st.markdown(f"""
-    - **Series 1 Marks:** `{s1:.1f} / 40.0`
-    - **Series 2 Marks:** `{s2:.1f} / 40.0`
-    - **Average Series Score:** `{(s1+s2)/2:.1f} / 40.0`
-    - **Trajectory Shift:** <span style="color: {delta_color}; font-weight: 600;">{delta:+.1f} pts</span>
+    - **Series 1 Marks:** `{s1:.1f} / 40.0` {info_btn('series_1')}
+    - **Series 2 Marks:** `{s2:.1f} / 40.0` {info_btn('series_2')}
+    - **Average Series Score:** `{(s1+s2)/2:.1f} / 40.0` {info_btn('series_avg')}
+    - **Trajectory Shift:** <span style="color: {delta_color}; font-weight: 600;">{delta:+.1f} pts</span> {info_btn('series_delta')}
     """, unsafe_allow_html=True)
 
     explainer = ModelExplainer(model=model, feature_names=REGRESSION_FEATURES)
     contribs = explainer.explain_student(student_row, top_k=2)
     if contribs:
-        st.markdown("**Assessment Attribution to Prediction:**")
-        attr_df = pd.DataFrame([
-            {
+        st.markdown(f"**Score-Point Attribution:** {info_btn('feature_attribution')}", unsafe_allow_html=True)
+        attr_rows = []
+        for c in contribs:
+            val = c.get("value")
+            is_series = c.get("feature") in ("series_1", "series_2")
+            if isinstance(val, (int, float)):
+                val_disp = f"{val:.1f} / 40" if is_series else f"{val:.1f}"
+            else:
+                try:
+                    num = float(val)
+                    val_disp = f"{num:.1f} / 40" if is_series else f"{num:.1f}"
+                except (ValueError, TypeError):
+                    val_disp = str(val)
+            attr_rows.append({
                 "Feature": c["display_name"],
-                "Student Mark": f"{c['value']:.1f}/40",
+                "Student Value": val_disp,
                 "Point Impact": f"{c['points']:+.2f} pts",
-            }
-            for c in contribs
-        ])
-        st.dataframe(attr_df, use_container_width=True, hide_index=True)
+            })
+        st.dataframe(pd.DataFrame(attr_rows), use_container_width=True, hide_index=True)
 
 with col_rules:
     st.subheader("Pedagogical Guidelines & Actions")

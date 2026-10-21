@@ -15,7 +15,7 @@ from src.features import (
     add_engineered_features,
 )
 
-RAW_DATA_PATH = Path("data/raw/student_performance_10000-1.csv")
+RAW_DATA_PATH = Path("data/raw/student_performance_5000.csv")
 PROCESSED_DIR = Path("data/processed")
 REPORTS_DIR = Path("reports")
 FIGURES_DIR = Path("reports/figures")
@@ -24,10 +24,15 @@ FIGURES_DIR = Path("reports/figures")
 def load_raw_data(path: Path = RAW_DATA_PATH) -> pd.DataFrame:
     """Loads raw student performance dataset and assigns row index as student_id."""
     if not path.exists():
-        # Fallback to local root if not yet in data/raw
-        alt_path = Path("student_performance_10000-1.csv")
-        if alt_path.exists():
-            path = alt_path
+        # Fallback paths
+        for alt in [
+            Path("student_performance_5000.csv"),
+            Path("data/raw/student_performance_10000-1.csv"),
+            Path("student_performance_10000-1.csv"),
+        ]:
+            if alt.exists():
+                path = alt
+                break
         else:
             raise FileNotFoundError(f"Raw data file not found at {path}")
     df = pd.read_csv(path)

@@ -118,6 +118,31 @@ CUSTOM_CSS = """
     border-left-color: #D97706 !important;
 }
 
+/* Info button & tooltip styling */
+.info-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background-color: #E2E8F0;
+    color: #334155;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    cursor: help;
+    margin-left: 6px;
+    vertical-align: middle;
+    transition: all 0.2s ease;
+    border: 1px solid #CBD5E1;
+}
+.info-btn:hover {
+    background-color: #2563EB;
+    color: #FFFFFF;
+    border-color: #1D4ED8;
+}
+
 /* Info Box */
 .info-box {
     background-color: #F8FAFC;
@@ -130,6 +155,154 @@ CUSTOM_CSS = """
 }
 </style>
 """
+
+MODEL_TERMS_GLOSSARY = {
+    "predicted_final_score": {
+        "term": "Predicted Final Score (ŷ)",
+        "definition": "The expected mark (0.0 – 100.0) forecasted by the regression model based on internal assessments, study habits, and demographic attributes.",
+    },
+    "prediction_interval": {
+        "term": "90% Prediction Interval",
+        "definition": "The calibrated score band [Lower, Upper] derived from the 90th percentile of empirical out-of-fold residuals (±13.9 pts). There is a 90% probability that the student's true exam score will fall inside this range.",
+    },
+    "academic_risk_category": {
+        "term": "Academic Risk Category",
+        "definition": "Categorizes academic vulnerability relative to Target Score (50.0) + Safety Buffer (3.0 pts). Flags whether a student is On Track, Near Target (Borderline), or Below Target.",
+    },
+    "risk_probability": {
+        "term": "Risk Probability P(Risk)",
+        "definition": "The statistical likelihood that the student scores below target, computed via the cumulative normal distribution Φ((Target - ŷ) / σ_residual). Categorized as High (≥60%), Medium (30–60%), or Low (<30%).",
+    },
+    "exam_eligibility": {
+        "term": "Exam Eligibility Policy",
+        "definition": "Institutional regulation mandating a minimum of 75.0% attendance. Students falling below 75% are disqualified from sitting for the final exam without formal condonation.",
+    },
+    "target_score": {
+        "term": "Target Score",
+        "definition": "The institutional benchmark or passing threshold (default 50.0 points out of 100).",
+    },
+    "risk_margin": {
+        "term": "Risk Margin (Buffer)",
+        "definition": "Safety buffer (default 3.0 points) added to the target score to proactively identify borderline students before they fail.",
+    },
+    "teacher_capacity": {
+        "term": "Teacher Capacity (N)",
+        "definition": "Workload bound on how many students the department can actively follow up with in a single intervention cycle (default top N=25).",
+    },
+    "priority_score": {
+        "term": "Priority Score",
+        "definition": "Composite ranking metric balancing risk probability, declining performance between assessment series, and triggered lifestyle indicators: w_risk · P(risk) + w_decline · Decline + w_flags · Flags.",
+    },
+    "mae": {
+        "term": "MAE (Mean Absolute Error)",
+        "definition": "Average point discrepancy between predicted and actual final exam marks on unseen test data. Current all-feature test MAE is 6.960 points.",
+    },
+    "rmse": {
+        "term": "RMSE (Root Mean Squared Error)",
+        "definition": "Square root of mean squared prediction error on test data (8.498 points). Heavily penalizes large forecasting misses.",
+    },
+    "r2": {
+        "term": "R² (Coefficient of Determination)",
+        "definition": "Proportion of variance in final marks explained by model features. Current model R² is 0.650 (65.0% of score variation is captured).",
+    },
+    "one_se_rule": {
+        "term": "1-Standard-Error (1-SE) Rule",
+        "definition": "Parsimony principle in machine learning that selects the simplest, most explainable model whose cross-validation error is within 1 standard error of the best candidate.",
+    },
+    "cross_validation": {
+        "term": "5-Fold Cross-Validation",
+        "definition": "Rigorous evaluation method partitioning the 4,000-student training dataset into 5 equal folds to tune hyperparameters without test data leakage.",
+    },
+    "oof_residuals": {
+        "term": "Out-of-Fold (OOF) Residuals",
+        "definition": "Prediction errors (Actual − Predicted) collected on unseen folds during cross-validation, used to calibrate honest empirical prediction intervals.",
+    },
+    "feature_attribution": {
+        "term": "Score-Point Feature Attribution",
+        "definition": "Linear feature breakdown (x_j - mean_j) · β_j displaying how many concrete exam marks each factor adds or subtracts relative to the cohort mean.",
+    },
+    "series_1": {
+        "term": "Series 1 Exam Score",
+        "definition": "First internal assessment exam mark (0–40). Contributes +0.838 points to the final exam score per mark.",
+    },
+    "series_2": {
+        "term": "Series 2 Exam Score",
+        "definition": "Second internal assessment exam mark (0–40). Contributes +0.800 points to the final exam score per mark.",
+    },
+    "series_avg": {
+        "term": "Average Series Score",
+        "definition": "Mean mark of Series 1 and Series 2 ((S1 + S2) / 2 out of 40). Thresholds below 18/40 trigger remedial support rules.",
+    },
+    "series_delta": {
+        "term": "Assessment Trajectory (Series 2 − Series 1)",
+        "definition": "Performance shift between exam series. A drop of 4.0 points or more triggers a declining trajectory alert.",
+    },
+    "study_hours_per_day": {
+        "term": "Daily Study Hours",
+        "definition": "Reported daily self-study hours. In the 5,000-student model, each additional study hour adds +1.305 points to the final exam score.",
+    },
+    "attendance_percentage": {
+        "term": "Class Attendance Rate (%)",
+        "definition": "Overall lecture and lab attendance rate. Adds +0.109 points per percentage point and determines final exam sitting eligibility (≥ 75%).",
+    },
+    "social_media_hours": {
+        "term": "Daily Social Media Hours",
+        "definition": "Daily recreational screen time. In the trained model, each additional hour of social media deducts −0.652 points from the final exam score.",
+    },
+    "age": {
+        "term": "Student Age",
+        "definition": "Chronological age in years (14–24). Accounts for maturity adjustments (+0.030 points per year).",
+    },
+    "gender": {
+        "term": "Student Gender",
+        "definition": "Student gender profile (Female, Male, Other). Monitored for disparate impact and demographic parity.",
+    },
+    "lifestyle_influence": {
+        "term": "Lifestyle & Study Habit Influence",
+        "definition": "The net impact of self-study hours, attendance percentage, and social media habits on the student's forecasted score.",
+    },
+    "linear_regression": {
+        "term": "Linear Regression Model",
+        "definition": "Interpretable regression pipeline computing ŷ = β₀ + ∑(βⱼ · xⱼ). Selected under the 1-SE rule for superior generalization and transparent point attribution.",
+    },
+    "permutation_importance": {
+        "term": "Permutation Feature Importance",
+        "definition": "Measures predictive reliance by calculating the degradation in R² score when values of a specific feature column are randomly shuffled.",
+    },
+    "residual": {
+        "term": "Residual Error (e = y − ŷ)",
+        "definition": "Difference between actual exam mark and model prediction. Homoscedastic scatter around 0.0 confirms model unbiasedness across the score range.",
+    },
+    "fairness_audit": {
+        "term": "Fairness & Disparate Impact Audit",
+        "definition": "Demographic parity inspection measuring MAE, recall, and precision across gender and age subgroups to guarantee non-discriminatory advising.",
+    },
+}
+
+
+def info_btn(term_key: str) -> str:
+    """Returns an inline HTML (i) button with hover tooltip for the term."""
+    item = MODEL_TERMS_GLOSSARY.get(term_key, {})
+    definition = item.get("definition", "").replace('"', '&quot;')
+    term = item.get("term", term_key).replace('"', '&quot;')
+    return f'<span class="info-btn" title="{term}: {definition}">i</span>'
+
+
+def render_glossary_popover(button_label: str = "ℹ️ Model Terminology Guide"):
+    """Renders a collapsible popover displaying all model terms and definitions."""
+    with st.popover(button_label):
+        st.markdown("#### 📘 Machine Learning & Evaluation Terminology Guide")
+        st.caption("Reference definitions and mathematical formulas for all model metrics, thresholds, and variables.")
+
+        search = st.text_input("🔍 Search terms...", placeholder="e.g. MAE, prediction interval, attendance", label_visibility="collapsed")
+        st.markdown("---")
+
+        for key, val in MODEL_TERMS_GLOSSARY.items():
+            if search and search.lower() not in val["term"].lower() and search.lower() not in val["definition"].lower():
+                continue
+            st.markdown(f"**{val['term']}**")
+            st.write(val["definition"])
+            st.markdown("")
 
 
 def apply_custom_styles():
@@ -216,11 +389,6 @@ def render_sidebar_controls() -> Settings:
         settings.risk_margin = new_margin
         save_settings(settings)
 
-    st.sidebar.divider()
-    st.sidebar.caption(
-        "**Predictive Policy:** Final examination marks are predicted using Series 1, Series 2, and "
-        "relevant lifestyle attributes. Lifestyle attributes may contribute to predictions when supported "
-        "by the training data. These attributes can also inform personalized academic support recommendations."
-    )
+
 
     return settings

@@ -12,10 +12,10 @@ def test_target_not_in_features():
         assert "final" not in col.lower()
 
 
-def test_protected_attributes_excluded_by_default():
-    """Hard requirement: age and gender are not model inputs by default."""
-    for p in PROTECTED_COLS:
-        assert p not in DEFAULT_FEATURE_COLS
+def test_all_features_included_in_model():
+    """Hard requirement: Every feature of the dataset is included in model inputs."""
+    for f in ["series_1", "series_2", "study_hours_per_day", "attendance_percentage", "social_media_hours", "age", "gender"]:
+        assert f in DEFAULT_FEATURE_COLS
 
 
 def test_train_test_split_ratio_and_disjoint():
@@ -23,8 +23,8 @@ def test_train_test_split_ratio_and_disjoint():
     df = load_raw_data()
     train_df, test_df = split_and_save_data(df)
 
-    assert len(train_df) == 8000
-    assert len(test_df) == 2000
+    assert len(train_df) == int(len(df) * 0.8)
+    assert len(test_df) == int(len(df) * 0.2)
 
     # Ensure completely disjoint index sets
     train_ids = set(train_df["student_id"])
@@ -35,10 +35,11 @@ def test_train_test_split_ratio_and_disjoint():
 def test_preprocessing_fitted_on_train_only():
     """Hard requirement: Preprocessing fitted on train data only, test set never seen in fit."""
     import joblib
+    from src.features import NUMERIC_FEATURES
     model = joblib.load("models/best_model.joblib")
-    scaler = model.named_steps.get("scaler")
-    if scaler is not None:
+    prep = model.named_steps.get("prep")
+    if prep is not None:
+        num_scaler = prep.named_transformers_["num"]
         train_df = pd.read_csv("data/processed/train.csv")
-        X_train = train_df[DEFAULT_FEATURE_COLS]
-        # Compare fitted mean with train mean
-        np.testing.assert_allclose(scaler.mean_, X_train.mean().values, rtol=1e-3)
+        X_num = train_df[NUMERIC_FEATURES]
+        np.testing.assert_allclose(num_scaler.mean_, X_num.mean().values, rtol=1e-3)

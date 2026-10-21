@@ -12,9 +12,11 @@ import streamlit as st
 
 from app.ui_utils import (
     apply_custom_styles,
+    info_btn,
     load_app_data,
     load_app_model,
     load_metrics_and_residuals,
+    render_glossary_popover,
     render_sidebar_controls,
 )
 from src.features import REGRESSION_FEATURES, TARGET_COL
@@ -30,7 +32,12 @@ apply_custom_styles()
 settings = render_sidebar_controls()
 
 # ── A. Header ──────────────────────────────────────────────────────────
-st.title("Student Performance Dashboard")
+head_c1, head_c2 = st.columns([3, 1])
+with head_c1:
+    st.title("Student Performance Dashboard")
+with head_c2:
+    st.write("")
+    render_glossary_popover()
 st.caption("Predict academic outcomes and identify students who may benefit from additional support.")
 
 # ── B. Primary Prediction Action ───────────────────────────────────────
@@ -88,7 +95,7 @@ with m1:
 with m2:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-title">Flagged for Support</div>
+        <div class="metric-title">Flagged for Support {info_btn('academic_risk_category')}</div>
         <div class="metric-value" style="color: #DC2626;">{at_risk_count}</div>
         <div class="metric-subtitle">&lt; {settings.target_score + settings.risk_margin:.0f} pts threshold ({round(at_risk_count/total_students*100, 1)}%)</div>
     </div>
@@ -97,7 +104,7 @@ with m2:
 with m3:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-title">Mean Predicted Mark</div>
+        <div class="metric-title">Mean Predicted Mark {info_btn('predicted_final_score')}</div>
         <div class="metric-value">{avg_predicted:.1f} <span style="font-size: 1rem; color: #64748B;">/ 100</span></div>
         <div class="metric-subtitle">Cohort forecast average</div>
     </div>
@@ -106,7 +113,7 @@ with m3:
 with m4:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-title">Model Test MAE</div>
+        <div class="metric-title">Model Test MAE {info_btn('mae')}</div>
         <div class="metric-value">{test_mae:.2f} <span style="font-size: 1rem; color: #64748B;">pts</span></div>
         <div class="metric-subtitle">Mean absolute error (Test Set)</div>
     </div>
@@ -117,7 +124,7 @@ st.markdown("---")
 c_chart1, c_chart2 = st.columns(2)
 
 with c_chart1:
-    st.subheader("Student Risk Distribution")
+    st.markdown(f"#### Student Risk Distribution {info_btn('risk_probability')}", unsafe_allow_html=True)
     risk_counts = scored_cohort["risk_badge"].value_counts().reindex(["High", "Medium", "Low"]).fillna(0).reset_index()
     risk_counts.columns = ["Risk Category", "Student Count"]
 
@@ -140,7 +147,7 @@ with c_chart1:
     st.caption("Risk categories determined by failure probability relative to configured target pass mark.")
 
 with c_chart2:
-    st.subheader("Assessment Scores Overview")
+    st.markdown(f"#### Assessment Scores Overview {info_btn('series_1')} {info_btn('series_2')}", unsafe_allow_html=True)
     plot_df = pd.DataFrame({
         "Series 1 (/40)": test_df["series_1"],
         "Series 2 (/40)": test_df["series_2"],
@@ -167,7 +174,7 @@ with c_chart2:
 st.markdown("---")
 col_header, col_nav_btn = st.columns([3, 1])
 with col_header:
-    st.subheader("Students Requiring Attention")
+    st.markdown(f"#### Students Requiring Attention {info_btn('priority_score')}", unsafe_allow_html=True)
 with col_nav_btn:
     if st.button("View All Students →", use_container_width=True):
         st.switch_page("pages/1_Priority_Queue.py")
